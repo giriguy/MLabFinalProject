@@ -1,2 +1,0 @@
-# MLabFinalProject
-MLab Final Project
