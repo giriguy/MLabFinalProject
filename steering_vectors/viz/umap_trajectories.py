@@ -10,6 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -78,73 +81,98 @@ def plot_umap_trajectories(
     embedding, _ = _fit_umap(vectors)
 
     n_concepts, n_layers, _ = vectors.shape
-    # Reshape to (n_concepts, n_layers, 2)
     traj = embedding.reshape(n_concepts, n_layers, 2)
 
-    cmap = cm.get_cmap("tab20", n_concepts)
     highlight_concepts = set(highlight_concepts or [])
 
     fig, ax = plt.subplots(figsize=figsize)
+    ax.set_facecolor("#fafafa")
 
-    legend_handles = []
     for i, name in enumerate(concept_names):
-        color = cmap(i)
-        lw = 3.0 if name in highlight_concepts else 1.5
-        alpha = 1.0 if name in highlight_concepts else 0.75
+        color = config.color_for(name)
+        is_hl = name in highlight_concepts
+        lw = 3.5 if is_hl else 1.8
+        marker_alpha = 1.0 if is_hl else 0.85
 
-        # Draw trajectory as a gradient line (darker = later layers)
         points = traj[i]  # (n_layers, 2)
         segments = np.stack([points[:-1], points[1:]], axis=1)
-        # Alpha ramps from 0.2 (early layers) to 1.0 (late layers)
-        alphas = np.linspace(0.2, 1.0, len(segments))
-        colors_with_alpha = [(*color[:3], a) for a in alphas]
+        alphas = np.linspace(0.25, 1.0, len(segments))
+        # color is hex; convert to RGBA
+        from matplotlib.colors import to_rgb
+        rgb = to_rgb(color)
+        colors_with_alpha = [(*rgb, a) for a in alphas]
 
         lc = LineCollection(segments, colors=colors_with_alpha, linewidths=lw)
         ax.add_collection(lc)
 
-        # Start marker (small circle)
-        ax.scatter(*points[0], color=color, s=30, zorder=5, alpha=0.5)
-        # End marker (larger circle)
-        ax.scatter(*points[-1], color=color, s=80, zorder=6, marker="D")
-        # Concept label near endpoint
+        # Start marker (small open circle)
+        ax.scatter(
+            *points[0], facecolors="white", edgecolors=color,
+            s=40, zorder=5, alpha=0.8, linewidths=1.2,
+        )
+        # End marker (filled diamond)
+        ax.scatter(
+            *points[-1], color=color, s=110, zorder=6,
+            marker="D", edgecolors="white", linewidths=1.0, alpha=marker_alpha,
+        )
+        # Endpoint label, larger for poster
         ax.annotate(
             name.replace("_", " "),
             xy=points[-1],
-            fontsize=6.5,
-            alpha=0.9,
-            xytext=(3, 3),
+            fontsize=9,
+            fontweight="medium",
+            alpha=0.95,
+            xytext=(6, 5),
             textcoords="offset points",
-        )
-
-        legend_handles.append(
-            Line2D([0], [0], color=color, linewidth=lw, label=name.replace("_", " "))
+            color="#222222",
         )
 
     ax.autoscale()
-    ax.set_xlabel("UMAP-1")
-    ax.set_ylabel("UMAP-2")
-    ax.set_title("Concept Steering Vector Trajectories Across Layers (UMAP)", fontsize=13)
-    ax.legend(
-        handles=legend_handles,
-        loc="upper right",
-        fontsize=7,
-        ncol=2,
-        framealpha=0.8,
+    ax.set_xlabel("UMAP-1", fontsize=12)
+    ax.set_ylabel("UMAP-2", fontsize=12)
+    ax.set_title(
+        "Concept Steering Vector Trajectories Across Layers",
+        fontsize=15,
+        fontweight="bold",
+        pad=12,
     )
+    ax.grid(True, alpha=0.25)
 
-    # Colorbar to indicate layer depth
-    sm = cm.ScalarMappable(
-        cmap="Greys",
-        norm=plt.Normalize(vmin=0, vmax=n_layers - 1),
+    # Category legend (8 colors instead of 25)
+    cat_handles = [
+        Line2D([0], [0], color=config.CATEGORY_COLORS[c], linewidth=3, label=c)
+        for c in config.CATEGORY_ORDER
+    ]
+    leg1 = ax.legend(
+        handles=cat_handles,
+        title="Category",
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1.0),
+        fontsize=10,
+        title_fontsize=11,
+        frameon=False,
     )
-    sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax, fraction=0.03, pad=0.02)
-    cbar.set_label("Layer index")
+    ax.add_artist(leg1)
+
+    # Marker legend explaining start/end
+    marker_handles = [
+        Line2D([0], [0], marker="o", color="white", markeredgecolor="black",
+               markersize=8, linestyle="", label="Layer 0 (start)"),
+        Line2D([0], [0], marker="D", color="black",
+               markersize=10, linestyle="", label=f"Layer {n_layers-1} (end)"),
+    ]
+    ax.legend(
+        handles=marker_handles,
+        loc="upper left",
+        bbox_to_anchor=(1.02, 0.55),
+        fontsize=9,
+        frameon=False,
+    )
 
     fig.tight_layout()
 
     if save_path is not None:
-        fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        fig.savefig(save_path, dpi=300, bbox_inches="tight")
         print(f"Saved UMAP trajectories -> {save_path}")
 
     return fig

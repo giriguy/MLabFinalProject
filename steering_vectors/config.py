@@ -67,6 +67,68 @@ CONCEPT_PAIRS: List[Tuple[str, str, str]] = [
 
 CONCEPT_NAMES: List[str] = [name for name, _, _ in CONCEPT_PAIRS]
 
+# Semantic grouping for visualization. Eight categories mapped to a
+# colorblind-safe Okabe-Ito palette (used across the poster panels).
+CONCEPT_CATEGORIES: dict = {
+    "formal_casual": "Pragmatics",
+    "polite_rude": "Pragmatics",
+    "urgent_calm": "Pragmatics",
+    "question_statement": "Pragmatics",
+    "positive_negative": "Sentiment",
+    "happy_sad": "Sentiment",
+    "optimistic_pessimistic": "Sentiment",
+    "emotional_neutral": "Sentiment",
+    "active_passive": "Syntax",
+    "past_present": "Syntax",
+    "first_third_person": "Syntax",
+    "technical_simple": "Register",
+    "scientific_colloquial": "Register",
+    "english_french": "Register",
+    "verbose_concise": "Style",
+    "long_short": "Style",
+    "specific_vague": "Style",
+    "creative_literal": "Style",
+    "instructional_narrative": "Content",
+    "hypothetical_factual": "Content",
+    "refuse_comply": "Intent",
+    "certain_uncertain": "Intent",
+    "assertive_hesitant": "Intent",
+    "inclusive_exclusive": "Scope",
+    "future_past": "Scope",
+}
+
+CATEGORY_ORDER: List[str] = [
+    "Pragmatics",
+    "Sentiment",
+    "Syntax",
+    "Register",
+    "Style",
+    "Content",
+    "Intent",
+    "Scope",
+]
+
+# Okabe-Ito palette (colorblind-safe, 8 colors). Used categorically.
+CATEGORY_COLORS: dict = {
+    "Pragmatics": "#E69F00",
+    "Sentiment": "#56B4E9",
+    "Syntax": "#009E73",
+    "Register": "#F0E442",
+    "Style": "#0072B2",
+    "Content": "#D55E00",
+    "Intent": "#CC79A7",
+    "Scope": "#999999",
+}
+
+
+def category_for(concept_name: str) -> str:
+    return CONCEPT_CATEGORIES.get(concept_name, "Other")
+
+
+def color_for(concept_name: str) -> str:
+    return CATEGORY_COLORS.get(category_for(concept_name), "#888888")
+
+
 # Steering sweep parameters
 DEFAULT_COEFF = 15.0
 COEFF_SWEEP = [5.0, 10.0, 15.0, 20.0, 30.0]

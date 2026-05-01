@@ -12,9 +12,13 @@ from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from matplotlib.widgets import Slider
 from torch import Tensor
+
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import config
 from compute_vectors import cosine_similarity_matrix, layer_similarity_matrices, load_vectors
@@ -30,40 +34,60 @@ def plot_cosine_heatmap(
     """
     Render a clustered cosine-similarity heatmap for all concepts at `layer_idx`.
 
-    Args:
-        vectors: (n_concepts, n_layers, d_model)
-        concept_names: Names aligned with dimension 0 of vectors.
-        layer_idx: Which layer to visualize.
-        save_path: If given, save the figure to this path.
-        title: Override the default figure title.
-
-    Returns:
-        seaborn ClusterGrid object.
+    Adds row/column color bars derived from config.CONCEPT_CATEGORIES so that
+    semantic groupings are visible alongside the cosine structure.
     """
-    vecs_at_layer = vectors[:, layer_idx, :].float().numpy()  # (n_concepts, d_model)
     sim_matrix = cosine_similarity_matrix(vectors[:, layer_idx, :]).numpy()
+    labels = [name.replace("_", " ") for name in concept_names]
 
-    labels = [name.replace("_", "\n") for name in concept_names]
+    cat_colors_list = [config.color_for(n) for n in concept_names]
+    col_colors = pd.Series(cat_colors_list, index=labels, name="Category")
 
     g = sns.clustermap(
-        sim_matrix,
-        xticklabels=labels,
-        yticklabels=labels,
+        pd.DataFrame(sim_matrix, index=labels, columns=labels),
         cmap="RdBu_r",
         center=0,
         vmin=-1,
         vmax=1,
-        figsize=(14, 12),
-        annot=len(concept_names) <= 15,  # only annotate if few enough concepts
+        figsize=(14, 13),
+        annot=len(concept_names) <= 15,
         fmt=".2f",
-        linewidths=0.5,
-        dendrogram_ratio=0.15,
+        linewidths=0.4,
+        linecolor="white",
+        dendrogram_ratio=0.12,
+        col_colors=col_colors,
+        row_colors=col_colors,
+        cbar_kws={"label": "Cosine similarity"},
     )
-    _title = title or f"Concept Cosine Similarity — Layer {layer_idx}"
-    g.figure.suptitle(_title, y=1.01, fontsize=14, fontweight="bold")
+
+    g.ax_heatmap.set_xticklabels(
+        g.ax_heatmap.get_xticklabels(), rotation=45, ha="right", fontsize=10
+    )
+    g.ax_heatmap.set_yticklabels(
+        g.ax_heatmap.get_yticklabels(), rotation=0, fontsize=10
+    )
+
+    # Category legend
+    legend_handles = [
+        plt.Rectangle((0, 0), 1, 1, color=config.CATEGORY_COLORS[c])
+        for c in config.CATEGORY_ORDER
+    ]
+    g.ax_heatmap.legend(
+        legend_handles,
+        config.CATEGORY_ORDER,
+        title="Category",
+        loc="upper left",
+        bbox_to_anchor=(1.18, 1.0),
+        frameon=False,
+        fontsize=9,
+        title_fontsize=10,
+    )
+
+    _title = title or f"Concept Cosine Similarity at Layer {layer_idx}"
+    g.figure.suptitle(_title, y=1.02, fontsize=16, fontweight="bold")
 
     if save_path is not None:
-        g.figure.savefig(save_path, bbox_inches="tight", dpi=150)
+        g.figure.savefig(save_path, bbox_inches="tight", dpi=300)
         print(f"Saved heatmap -> {save_path}")
 
     return g
@@ -134,5 +158,26 @@ def save_all_layer_heatmaps(
         plt.close("all")
 
 
+def render_poster_heatmap(
+    layer_idx: int = 14,
+    output_dir: Path = config.VIZ_DIR,
+) -> Path:
+    """Render the canonical poster cosine heatmap (default: mid-network layer 14)."""
+    vectors, concept_names = load_vectors()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out = output_dir / f"cosine_heatmap_poster_layer{layer_idx:02d}.png"
+    g = plot_cosine_heatmap(vectors, concept_names, layer_idx=layer_idx, save_path=out)
+    plt.close(g.figure)
+    return out
+
+
 if __name__ == "__main__":
-    interactive_layer_heatmap()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--poster", action="store_true", help="Render poster heatmap and exit")
+    parser.add_argument("--layer", type=int, default=14)
+    args = parser.parse_args()
+    if args.poster:
+        render_poster_heatmap(layer_idx=args.layer)
+    else:
+        interactive_layer_heatmap()

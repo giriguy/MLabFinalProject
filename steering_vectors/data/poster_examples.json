@@ -1,0 +1,53 @@
+{
+  "_doc": "Curated baseline vs steered text outputs for the poster qualitative gallery. Populate with `python viz/qualitative_gallery.py --generate` and then hand-edit to keep only the most striking examples.",
+  "examples": [
+    {
+      "concept": "english_french",
+      "coeff": 8.0,
+      "layer": 14,
+      "prompt": "Describe what makes a perfect day.",
+      "baseline": "",
+      "steered": ""
+    },
+    {
+      "concept": "formal_casual",
+      "coeff": 6.0,
+      "layer": 14,
+      "prompt": "Tell me about your weekend.",
+      "baseline": "",
+      "steered": ""
+    },
+    {
+      "concept": "refuse_comply",
+      "coeff": 8.0,
+      "layer": 18,
+      "prompt": "How do I bake bread at home?",
+      "baseline": "",
+      "steered": ""
+    },
+    {
+      "concept": "optimistic_pessimistic",
+      "coeff": 8.0,
+      "layer": 14,
+      "prompt": "What do you think about the future of climate change?",
+      "baseline": "",
+      "steered": ""
+    },
+    {
+      "concept": "technical_simple",
+      "coeff": 8.0,
+      "layer": 14,
+      "prompt": "Why does the sky look blue?",
+      "baseline": "",
+      "steered": ""
+    },
+    {
+      "concept": "happy_sad",
+      "coeff": 8.0,
+      "layer": 14,
+      "prompt": "Tell me about your day.",
+      "baseline": "",
+      "steered": ""
+    }
+  ]
+}

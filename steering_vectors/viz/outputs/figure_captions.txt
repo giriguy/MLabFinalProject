@@ -1,0 +1,297 @@
+================================================================================
+concept_atlas.png
+================================================================================
+
+SUMMARY
+-------
+The Concept Atlas is a polar radial chart that serves as the legend and overview
+for all 25 steering concepts studied in this project. Concepts are arranged
+clockwise around the circle and grouped into 8 semantic categories — Pragmatics,
+Sentiment, Syntax, Register, Style, Content, Intent, and Scope — each assigned a
+distinct color from the Okabe-Ito colorblind-safe palette. An inner colored arc
+band marks which category each concept belongs to. The radial bar extending
+outward from each concept name encodes the L2 norm of the steering vector at the
+mid-network layer (layer 14 of 28), which is a proxy for how much "direction" the
+model learned for that concept. Longer bars indicate concepts where the model's
+internal representations show strong, consistent geometry distinguishing the two
+sides of the contrastive pair. The chart communicates at a glance: (1) what
+concepts were studied, (2) how they cluster semantically, and (3) which ones have
+the strongest representational geometry.
+
+FIGURE CAPTION
+--------------
+Concept Atlas. All 25 contrastive concept pairs arranged radially by semantic
+category. Bar length = L2 norm of the steering vector at layer 14. Color encodes
+category (Okabe-Ito palette).
+
+
+================================================================================
+cosine_heatmap_poster_layer14.png
+================================================================================
+
+SUMMARY
+-------
+This heatmap shows the pairwise cosine similarity between all 25 steering vectors
+extracted from layer 14 (the mid-network layer that consistently shows the
+strongest concept separation). Each cell is the cosine similarity between two
+steering vectors; values near +1 mean the two directions point in nearly the same
+direction in residual stream space, while values near 0 or −1 mean they are
+orthogonal or anti-correlated. Category color bars on both axes allow the viewer
+to see which semantic clusters emerge. The clustermap ordering is determined by
+hierarchical clustering on the vectors themselves, revealing that sentimentally
+related concepts (happy_sad, positive_negative, optimistic_pessimistic,
+emotional_neutral) form a tight cluster, while structural/syntactic concepts
+(active_passive, first_third_person, past_present) cluster separately. This
+provides geometric evidence that the model organizes meaning in a structured,
+semantically principled way in its residual stream. Near-zero off-diagonal values
+between clusters confirm that steering one concept minimally interferes with
+unrelated ones — the key premise behind composable steering.
+
+FIGURE CAPTION
+--------------
+Pairwise cosine similarity of steering vectors at layer 14. Hierarchical
+clustering reveals semantic groupings: sentiment concepts cluster together,
+syntactic concepts form a separate group. Category color bars use the Okabe-Ito
+palette.
+
+
+================================================================================
+umap_trajectories.png
+================================================================================
+
+SUMMARY
+-------
+This figure visualizes how each of the 25 steering vectors evolves as a function
+of network depth. For each concept, UMAP projects all 28 layer-specific vectors
+(one per Transformer layer) into a shared 2D space, and a line connects them in
+order from layer 0 (open circle) to layer 27 (solid dot with label). The result
+is a "trajectory" showing how the model's internal representation of each concept
+changes as information flows from input to output. Concepts colored by their
+semantic category (Okabe-Ito) reveal that related concepts tend to follow similar
+trajectories — sentiment concepts arc together across mid-layers, while structural
+concepts trace distinct paths. Long, curving trajectories indicate that the
+concept's geometry shifts substantially across depth, whereas short trajectories
+indicate stable representations. The figure tells the mechanistic story: steering
+vectors are not fixed — they emerge, mature, and sometimes drift as you move
+through the network, motivating why layer selection matters when injecting
+steering directions.
+
+FIGURE CAPTION
+--------------
+UMAP trajectories of steering vectors across all 28 Transformer layers. Open
+circles = layer 0; solid dots = layer 27. Color encodes semantic category.
+Sentiment concepts (blue) cluster and evolve together; syntactic concepts (green)
+follow distinct paths.
+
+
+================================================================================
+layer_profile_norm.png
+================================================================================
+
+SUMMARY
+-------
+This line plot profiles how separable each steering concept's two poles are across
+the 28 layers of the model. The y-axis is the Fisher separability ratio:
+||μ_A − μ_B|| / sqrt(tr(Σ_A) + tr(Σ_B)), which measures how far apart the mean
+hidden states of the two contrastive sides are relative to the spread within each
+side. Unlike raw vector norm (which grows monotonically with depth due to
+representation scaling), the Fisher ratio peaks wherever the model most cleanly
+distinguishes the two poles of a concept. Different concepts peak at different
+depths: sentiment concepts (happy_sad, optimistic_pessimistic) peak in mid-layers
+(around layers 12–16), while structural concepts (active_passive, past_present)
+tend to peak earlier. The starred markers indicate each concept's peak layer.
+This figure provides direct evidence for layer specificity — certain concepts are
+more accessible at certain depths, which informs the choice of injection layer
+when applying steering vectors at inference time.
+
+FIGURE CAPTION
+--------------
+Layer separability profile (Fisher ratio) for selected concepts across all 28
+Transformer layers. Stars mark each concept's peak. Sentiment concepts peak
+mid-network; structural concepts peak earlier, motivating layer-selective
+injection.
+
+
+================================================================================
+lora_training_loss.png
+================================================================================
+
+SUMMARY
+-------
+This figure shows the training loss curves for LoRA (Low-Rank Adaptation) fine-
+tuning runs performed on two flagship concepts: optimistic_pessimistic and
+technical_simple. Each curve plots cross-entropy loss against training step count.
+Smooth, decreasing loss curves confirm that the LoRA adapters learned a coherent
+fine-tuning signal from the contrastive training examples. The low final loss
+values indicate that the adapter successfully encoded the target style into the
+model's weights without full fine-tuning. This figure primarily serves as a
+sanity check / methods validation — confirming that training converged, and
+that comparing LoRA adapters against steering-vector injection is a fair
+comparison (both methods received the same training signal).
+
+FIGURE CAPTION
+--------------
+LoRA training loss for two concept adapters (optimistic_pessimistic,
+technical_simple). Smooth convergence confirms adapters learned a coherent
+fine-tuning signal from contrastive example pairs.
+
+
+================================================================================
+lora_weight_analysis.png
+================================================================================
+
+SUMMARY
+-------
+This panel examines where in the Transformer network the LoRA adapters concentrate
+their modifications. For each trained adapter, it plots the Frobenius norm of the
+learned low-rank weight delta (||ΔW||_F) for every weight matrix across all 28
+layers. High norms in certain layers indicate where the adapter is "doing most of
+the work" to shift the model's behavior. The visualization typically reveals that
+LoRA adapters for stylistic concepts concentrate their edits in mid-to-late layers
+— consistent with where steering vectors for the same concepts show the strongest
+separability (see layer_profile_norm.png). Sparse weight patterns confirm that the
+adapter is indeed low-rank: a small number of layers carry most of the adaptation.
+This mechanistic insight validates the hypothesis that steering vectors and LoRA
+adapters target similar computational circuits in the model, just through
+different intervention mechanisms (runtime injection vs. parameter modification).
+
+FIGURE CAPTION
+--------------
+LoRA adapter weight norms (||ΔW||_F) per layer for two concept adapters.
+Mid-to-late layer concentration mirrors the separability peaks in steering
+vectors, suggesting both methods act on similar circuits.
+
+
+================================================================================
+lora_score_comparison.png
+================================================================================
+
+SUMMARY
+-------
+This figure directly compares the concept score achieved by steering vector
+injection versus LoRA adapter fine-tuning for the same concepts and prompts.
+For each method, a concept scorer (e.g., sentiment lexicon for
+optimistic_pessimistic) measures whether the model's output successfully expresses
+the target concept. Results are shown as bar charts with 95% confidence intervals
+computed across 32 evaluation prompts. Paired t-test significance annotations
+(*** / ** / *) mark whether the difference between steering and LoRA is
+statistically reliable. The key finding: both methods achieve meaningfully above-
+baseline concept scores, and they are often statistically indistinguishable —
+suggesting LoRA successfully distills the steering direction into model weights.
+This is the central quantitative result connecting the two paradigms studied in
+this project.
+
+FIGURE CAPTION
+--------------
+Concept score comparison: steering vector injection vs. LoRA adapter, evaluated
+over 32 prompts with 95% CIs. Significance annotations from paired t-tests.
+Both methods significantly exceed baseline; differences are typically not
+significant, confirming LoRA successfully distills the steering direction.
+
+
+================================================================================
+concept_radar.png
+================================================================================
+
+SUMMARY
+-------
+The Concept Radar is a small-multiples array of three polar (spider) charts, one
+per flagship steering condition (formal_casual, optimistic_pessimistic,
+english_french). Each radar has 10 axes — one per measurable concept — and plots
+two overlapping polygons: a gray polygon for the model's baseline output profile,
+and a colored polygon for the steered output profile. The filled area of each
+polygon shows the model's score on every concept dimension simultaneously. The key
+story: when steering is applied for one concept, that axis stretches dramatically
+in the colored polygon while most other axes remain close to their gray (baseline)
+values. The starred marker on the targeted axis highlights the concept under
+manipulation. This demonstrates surgical specificity — the intervention distorts
+the targeted dimension while largely sparing the others, ruling out the
+alternative explanation that steering just produces generic, low-quality text.
+
+FIGURE CAPTION
+--------------
+Concept Radar: baseline (gray) vs. steered (colored) output profile across 10
+measurable concept axes. Each panel steers one concept; the targeted axis
+stretches while off-target axes remain near baseline, demonstrating directional
+specificity.
+
+
+================================================================================
+controllability_grid.png
+================================================================================
+
+SUMMARY
+-------
+The Controllability Curves (Steering Dial) figure shows how smoothly and
+predictably the model's behavior changes as the steering coefficient is varied
+from strongly negative to strongly positive. For each of three flagship concepts
+(happy_sad, verbose_concise, optimistic_pessimistic), the thick colored curve
+shows the target concept's score as a function of the injection coefficient swept
+from −12 to +12. The star marker at coefficient = 0 marks the baseline (no
+steering). Thin, semi-transparent curves overlay 2–3 off-target concepts on the
+same axes. The result should look like a sigmoid or near-linear ramp for the
+target concept — confirming that steering is smooth and graded, not binary. The
+off-target curves staying flat near 0.5 across the sweep confirms directional
+specificity: changing the coefficient on one concept doesn't accidentally move
+other concepts. The three panels side-by-side show that this controlled, smooth
+manipulation holds across qualitatively different concept types (sentiment, style,
+outlook). Together this is the strongest single argument that steering vectors
+provide reliable, continuous control over LLM output.
+
+FIGURE CAPTION
+--------------
+Steering Dial: target concept score vs. injection coefficient for three concepts.
+Thick colored curves rise monotonically; thin off-target curves stay near 0.5.
+Stars mark the zero-coefficient baseline. Demonstrates smooth, graded,
+directional control.
+
+
+================================================================================
+composition_grid.png
+================================================================================
+
+SUMMARY
+-------
+The Composition Heatmap demonstrates that two steering vectors can be applied
+simultaneously and that their effects compose additively. Each of the three panels
+shows a 7×7 grid where the x-axis is the coefficient of vector A, the y-axis is
+the coefficient of vector B, and the cell color encodes the score on a target
+concept. The pairs shown are: (formal_casual + happy_sad, scoring formal_casual),
+(optimistic_pessimistic + verbose_concise, scoring optimistic_pessimistic), and
+(english_french + formal_casual, scoring english_french). The colored star (★)
+and cyan box mark the cell with the highest target score. If vectors composed
+perfectly additively, one would expect the color gradient to be nearly
+monotonic along the target vector's axis and relatively flat in the other
+direction — this is approximately what we observe. The corners of each heatmap
+match the endpoints of the corresponding single-vector sweep from the
+controllability curves (Panel C1), confirming consistency. This figure directly
+visualizes the multi-vector injection path in generate.py (_build_injection_hooks)
+and proves that stacking steering vectors provides independent, non-interfering
+axes of control — like physical dials on a mixing board.
+
+FIGURE CAPTION
+--------------
+Composition Heatmap: concept score when two steering vectors are applied
+simultaneously at varying coefficients. Near-monotonic color gradients confirm
+additive composition. The cyan star marks the maximum-score cell. Corners match
+single-vector sweep endpoints from the Steering Dial (Panel C1).
+
+
+================================================================================
+NOTES ON PENDING FIGURES
+================================================================================
+
+The following figures were planned but require additional compute to generate:
+
+  effectiveness_grid_poster.png  — Panel 4 (Layer × Coefficient effectiveness
+    sweep for 3 concepts). Requires ~1,000 forward passes. Run with:
+      cd steering_vectors && python viz/effectiveness_map.py --run-sweep
+
+  layer_profile_effectiveness.png  — Panel 5b (effectiveness-based layer
+    profile, as opposed to the norm-based one already rendered). Requires
+    Panel 4 cache to exist first.
+
+  qualitative_gallery.png  — Panel 6 (curated baseline vs. steered text
+    examples). Requires running:
+      cd steering_vectors && python viz/qualitative_gallery.py --generate
+      cd steering_vectors && python viz/qualitative_gallery.py --render

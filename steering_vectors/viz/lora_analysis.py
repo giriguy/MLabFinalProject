@@ -55,6 +55,28 @@ EVAL_PROMPTS: List[str] = [
     "What makes a city a great place to live?",
     "How has the internet changed society?",
     "What is the most interesting scientific discovery of recent decades?",
+    "Describe a memorable journey you have taken.",
+    "What lessons can we learn from history?",
+    "How do you approach learning a new skill?",
+    "What role does art play in society?",
+    "Describe an ideal education system.",
+    "What does success mean to you?",
+    "How can communities support mental health?",
+    "What are the trade-offs of social media?",
+    "Describe a meaningful conversation.",
+    "What habits make a person happy?",
+    "How will transportation change in 50 years?",
+    "Describe what good leadership looks like.",
+    "What are the benefits of reading regularly?",
+    "Explain why people should travel more.",
+    "Discuss the role of curiosity in life.",
+    "What changes would you make to your city?",
+    "Describe how to cook a simple meal.",
+    "What advice would you give a teenager?",
+    "Explain the value of friendship.",
+    "Describe a sustainable lifestyle.",
+    "What makes a story memorable?",
+    "Discuss the future of healthcare.",
 ]
 
 # Colour palette consistent with the rest of the viz outputs
@@ -131,7 +153,7 @@ def plot_training_loss(adapters: Dict[str, Path], save_path: Path) -> None:
         sns.despine(ax=ax)
 
     plt.tight_layout()
-    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     logger.info("Saved %s", save_path)
 
@@ -222,7 +244,7 @@ def plot_weight_analysis(adapters: Dict[str, Path], save_path: Path) -> None:
         sns.despine(ax=ax_r)
 
     plt.tight_layout()
-    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     logger.info("Saved %s", save_path)
 
@@ -364,6 +386,8 @@ def plot_score_comparison(
     fig.suptitle("Concept Score: Baseline vs. LoRA vs. Steered Model", fontsize=13, fontweight="bold")
     accent_colours = [COL_TS, COL_OP, PALETTE[5], PALETTE[6]]
 
+    from scipy import stats as scistats
+
     for ax, (concept, _), colour in zip(axes, adapters.items(), accent_colours):
         if concept not in concept_names:
             continue
@@ -378,27 +402,64 @@ def plot_score_comparison(
         colours_bar = [COL_BASELINE, colour, COL_STEERED]
         labels = ["Baseline", "LoRA", "Steered"]
         means = [np.nanmean(scores[c]) for c in conditions]
-        stds  = [np.nanstd(scores[c]) / np.sqrt(np.sum(~np.isnan(scores[c]))) for c in conditions]
+        # 95% CI using t-distribution
+        cis = []
+        for c in conditions:
+            vals = np.array([v for v in scores[c] if not np.isnan(v)])
+            if len(vals) < 2:
+                cis.append(0.0)
+                continue
+            sem = scistats.sem(vals)
+            h = sem * scistats.t.ppf(0.975, len(vals) - 1)
+            cis.append(h)
 
-        bars = ax.bar(labels, means, yerr=stds, color=colours_bar,
-                      capsize=5, edgecolor="white", linewidth=0.5, alpha=0.85)
+        ax.bar(labels, means, yerr=cis, color=colours_bar,
+               capsize=8, edgecolor="white", linewidth=1.0, alpha=0.92)
 
-        # Scatter individual points
+        # Scatter individual points with jitter
         for i, c in enumerate(conditions):
             vals = [v for v in scores[c] if not np.isnan(v)]
-            jitter = np.random.default_rng(42).uniform(-0.15, 0.15, len(vals))
+            jitter = np.random.default_rng(42).uniform(-0.18, 0.18, len(vals))
             ax.scatter(np.full(len(vals), i) + jitter, vals,
-                       color="black", s=18, alpha=0.45, zorder=5)
+                       color="black", s=22, alpha=0.45, zorder=5,
+                       edgecolors="white", linewidths=0.6)
 
-        ax.set_title(concept.replace("_", " ").title(), fontsize=11)
-        ax.set_ylabel("Concept score (0 = side-B, 1 = side-A)")
-        ax.set_ylim(0, 1.05)
+        # Paired t-tests: baseline vs LoRA, baseline vs Steered
+        def _annotate_sig(i_lo, i_hi, base_vals, comp_vals, height):
+            base_arr = np.array([v for v in base_vals if not np.isnan(v)])
+            comp_arr = np.array([v for v in comp_vals if not np.isnan(v)])
+            if len(base_arr) < 2 or len(comp_arr) < 2:
+                return
+            n = min(len(base_arr), len(comp_arr))
+            try:
+                _, p = scistats.ttest_rel(base_arr[:n], comp_arr[:n])
+            except Exception:
+                return
+            if np.isnan(p):
+                return
+            mark = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else "ns"
+            ax.plot([i_lo, i_hi], [height, height], color="black", linewidth=1)
+            ax.plot([i_lo, i_lo], [height - 0.015, height], color="black", linewidth=1)
+            ax.plot([i_hi, i_hi], [height - 0.015, height], color="black", linewidth=1)
+            ax.text((i_lo + i_hi) / 2, height + 0.01, mark,
+                    ha="center", va="bottom", fontsize=10, fontweight="bold")
+
+        _annotate_sig(0, 1, scores["baseline"], scores["lora"], 0.93)
+        _annotate_sig(0, 2, scores["baseline"], scores["steered"], 1.00)
+
+        n_eval_actual = sum(1 for v in scores["baseline"] if not np.isnan(v))
+        ax.set_title(
+            f"{concept.replace('_', ' ').title()}  (n={n_eval_actual})",
+            fontsize=12, fontweight="bold",
+        )
+        ax.set_ylabel("Concept score  (0 = side-B, 1 = side-A)", fontsize=10)
+        ax.set_ylim(0, 1.12)
         ax.axhline(0.5, color="grey", linestyle=":", linewidth=0.8)
         ax.grid(axis="y", alpha=0.3)
         sns.despine(ax=ax)
 
     plt.tight_layout()
-    fig.savefig(save_path, dpi=150, bbox_inches="tight")
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
     logger.info("Saved %s", save_path)
 
