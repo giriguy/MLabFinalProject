@@ -59,9 +59,9 @@ RADAR_AXES = [
 
 # Steering conditions to render: (target_concept, coeff)
 DEFAULT_STEER_CONDITIONS = [
-    ("formal_casual", 8.0),
-    ("optimistic_pessimistic", 8.0),
-    ("english_french", 8.0),
+    ("formal_casual", 12.0),
+    ("optimistic_pessimistic", 12.0),
+    ("english_french", 12.0),
 ]
 
 
@@ -113,10 +113,10 @@ def gather_data(
 
     cache_path = CACHE_DIR / f"radar_layer{layer}.npz"
     if use_cache and cache_path.exists():
-        data = dict(np.load(cache_path, allow_pickle=True))
+        npz = np.load(cache_path, allow_pickle=True)
         print(f"Loaded radar cache -> {cache_path}")
-        return {k: data[k].item() if data[k].dtype == object else data[k]
-                for k in data.files}
+        return {k: npz[k].item() if npz[k].ndim == 0 else list(npz[k])
+                for k in npz.files}
 
     vectors, concept_names = load_vectors()
 
@@ -223,8 +223,7 @@ def main_cli() -> None:
         data = {
             "baseline": data_raw["baseline"].item(),
             "steered": data_raw["steered"].item(),
-            "axes": list(data_raw["axes"].item()) if data_raw["axes"].dtype == object
-                    else list(data_raw["axes"]),
+            "axes": list(data_raw["axes"]),
         }
         render_radar_grid(data)
         return

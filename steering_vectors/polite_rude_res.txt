@@ -1,0 +1,62 @@
+
+────────────────────────────────────────────────────────────────────────────────────────
+PROMPT  : Explain how computers work
+STEERING: polite_rude (coeff=20.0, layer=27)
+METHOD  : activation injection
+────────────────────────────────────────────────────────────────────────────────────────
+
+--- ORIGINAL ---
+Computers are electronic devices that can process information and perform calculations
+based on instructions stored in their memory. They consist of several key components:
+1. Central Processing Unit (CPU): The brain of the computer, which performs arithmetic
+and logical operations.  2. Random Access Memory (RAM): Temporary storage for data being
+used by the CPU.  3. Hard Disk Drive (HDD) or Solid State Drive (SSD): Long-term storage
+where data is permanently recorded.  4. Input Devices: Devices like keyboards, mice,
+scanners, cameras, microphones, etc., to input data into the computer.  5. Output
+Devices: Printers, monitors, speakers, etc., to display results.  6. Power Supply:
+Converts electrical energy from an external source into usable power for the computer's
+hardware.  7. Motherboard: Connects all other components together and provides a pathway
+for signals between them.  8. Operating System (OS): A software program that manages
+resources within the computer system, controls communication with user applications, and
+acts as an interface between users and the rest of the computer hardware.  9.
+Applications: Programs designed to accomplish specific tasks, such as word processing,
+web browsing, gaming, etc.  The basic process of how a computer works involves receiving
+input through one of its input
+
+--- STEERED+ ---
+Computers work by processing and manipulating data using instructions written in a
+programming language such as Python or Java. The basic components of a computer include
+the central processing unit (CPU), memory, input/output devices, and storage. The CPU is
+responsible for executing instructions that tell it what to do. It works by reading
+instructions from memory and then performing calculations or operations based on those
+instructions. Memory stores data temporarily so that it can be quickly accessed by the
+CPU. This includes both volatile memory (such as RAM) which loses its contents when
+power is lost, and non-volatile memory (such as hard drives) which retains its contents
+even after power is turned off. Input/output devices allow users to interact with the
+computer. These may include keyboards, mice, monitors, printers, scanners, etc. They
+receive input from the user and send output back to them. Storage allows data to be
+stored permanently. This could be on a hard drive, solid-state drive, flash drive, cloud
+storage, or other form of long-term storage. Together, these components work together to
+perform tasks and solve problems. The program code tells the computer exactly what to
+do, and the hardware provides the means to execute that code.
+
+--- STEERED- ---
+Computers are electronic devices that can perform complex calculations and processes
+based on instructions provided to them in the form of code or software. The basic
+principle behind computer operation is the concept of binary arithmetic, which uses two
+symbols - 0 and 1 - to represent all possible values.  When a user inputs data into a
+computer, it is stored as bits (binary digits) within the computer's memory system.
+These bits can be either 0s or 1s and represent different types of information such as
+text, numbers, images, sounds, and videos.  The processor, also known as the central
+processing unit (CPU), is responsible for executing these instructions and performing
+mathematical operations. It reads the code from the hard drive or other storage devices
+and interprets each instruction according to its specific purpose. For example, if an
+instruction specifies adding two numbers together, the CPU will add those numbers using
+internal registers and perform the addition operation.  Once the processor has executed
+an instruction, it produces new output data or performs further computations. This
+process continues until the program reaches its end point or certain conditions are met.
+In summary, computers use binary arithmetic and execute instructions through their
+processors to manipulate and process data. The result is a powerful tool capable of
+handling complex tasks across various fields including science,
+
+────────────────────────────────────────────────────────────────────────────────────────

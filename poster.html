@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Steering Vector Analysis — ML@Berkeley</title>
+  <style>
+    /* ── Print target: A0 landscape (1189 × 841 mm) ── */
+    @page { size: A0 landscape; margin: 0; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background: #cfd8dc;
+      width: 1189mm;
+      min-height: 841mm;
+    }
+
+    /* ════════════════════════════════════════════════
+       HEADER
+    ════════════════════════════════════════════════ */
+    header {
+      background: linear-gradient(130deg, #00274c 0%, #003262 55%, #0d47a1 100%);
+      color: #fff;
+      padding: 11mm 20mm 9mm;
+      text-align: center;
+      border-bottom: 5mm solid #fdb515;
+    }
+
+    header h1 {
+      font-size: 52pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.08;
+      margin-bottom: 5mm;
+    }
+
+    header .authors {
+      font-size: 24pt;
+      font-weight: 300;
+      margin-bottom: 3mm;
+      letter-spacing: 0.3px;
+    }
+
+    header .institution {
+      font-size: 18pt;
+      opacity: 0.80;
+      letter-spacing: 0.8px;
+    }
+
+    /* ════════════════════════════════════════════════
+       POSTER BODY  —  4-column grid
+    ════════════════════════════════════════════════ */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.08fr 1.08fr;
+      gap: 7mm;
+      padding: 7mm 9mm 8mm;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 7mm;
+    }
+
+    /* ════════════════════════════════════════════════
+       SECTION CARDS
+    ════════════════════════════════════════════════ */
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
+
+    .card-title {
+      font-size: 20pt;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #fff;
+      padding: 4mm 7mm;
+      line-height: 1.1;
+    }
+
+    .card.abstract  .card-title { background: #003262; }
+    .card.intro     .card-title { background: #00695c; }
+    .card.bg        .card-title { background: #1565c0; }
+    .card.methods   .card-title { background: #283593; }
+    .card.res-geo   .card-title { background: #1b5e20; }
+    .card.res-lora  .card-title { background: #4a148c; }
+    .card.concl     .card-title { background: #b71c1c; }
+    .card.refs      .card-title { background: #37474f; }
+
+    .card-body {
+      padding: 5mm 7mm 6mm;
+    }
+
+    /* ════════════════════════════════════════════════
+       TYPOGRAPHY
+    ════════════════════════════════════════════════ */
+    p {
+      font-size: 17pt;
+      line-height: 1.48;
+      color: #1a1a1a;
+      margin-bottom: 3.5mm;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      font-size: 17pt;
+      line-height: 1.52;
+      color: #1a1a1a;
+      padding-left: 6mm;
+      margin-bottom: 3.5mm;
+    }
+
+    /* ── tighter bullet spacing ── */
+    li { margin-bottom: 0.8mm; }
+    li:last-child { margin-bottom: 0; }
+
+    h3 {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #003262;
+      margin: 4.5mm 0 2mm;
+      border-bottom: 1px solid #e0e8f0;
+      padding-bottom: 1mm;
+    }
+
+    h3:first-child { margin-top: 0; }
+
+    strong { color: #003262; }
+    em { color: #444; font-style: italic; }
+    sub { font-size: 12pt; vertical-align: sub; }
+
+    /* ════════════════════════════════════════════════
+       FIGURES
+    ════════════════════════════════════════════════ */
+    .fig {
+      margin: 4mm 0;
+      text-align: center;
+    }
+
+    .fig img {
+      max-width: 100%;
+      max-height: 185mm;
+      object-fit: contain;
+      border: 0.6px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .fig img.short { max-height: 105mm; }
+    .fig img.medium { max-height: 140mm; }
+
+    .fig-cap {
+      font-size: 13pt;
+      color: #555;
+      font-style: italic;
+      margin-top: 2mm;
+      text-align: left;
+      line-height: 1.35;
+    }
+
+    .fig-cap strong { color: #333; font-style: normal; font-size: 13pt; }
+
+    /* ════════════════════════════════════════════════
+       CALLOUT  &  FINDING BOX
+    ════════════════════════════════════════════════ */
+    .callout {
+      background: #e8f4fd;
+      border-left: 5px solid #1565c0;
+      border-radius: 0 4px 4px 0;
+      padding: 4mm 5mm;
+      margin: 4mm 0 0;
+    }
+
+    .callout-label {
+      font-size: 12pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #1565c0;
+      margin-bottom: 2mm;
+    }
+
+    .callout p {
+      font-size: 14.5pt;
+      margin-bottom: 1.5mm;
+      color: #1a1a1a;
+      line-height: 1.4;
+    }
+
+    .callout p:last-child { margin-bottom: 0; }
+
+    .callout + .callout { margin-top: 3mm; }
+
+    .finding {
+      background: #fff8e1;
+      border: 2px solid #fdb515;
+      border-radius: 5px;
+      padding: 3.5mm 5mm;
+      margin: 4mm 0;
+      font-size: 16pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+    }
+
+    .finding strong { color: #e65100; }
+
+    /* ════════════════════════════════════════════════
+       PIPELINE STEP LIST
+    ════════════════════════════════════════════════ */
+    ol.pipeline {
+      list-style: none;
+      padding-left: 0;
+      counter-reset: step;
+    }
+
+    ol.pipeline li {
+      counter-increment: step;
+      padding-left: 8.5mm;
+      position: relative;
+      margin-bottom: 2mm;
+    }
+
+    ol.pipeline li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.5mm;
+      background: #003262;
+      color: #fff;
+      font-size: 11pt;
+      font-weight: 700;
+      width: 6mm;
+      height: 6mm;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── divider between subsections ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 4mm 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header>
+  <h1>Steering Vector Analysis: Mechanistic Interpretability of Qwen2.5-1.5B-Instruct</h1>
+  <div class="authors">
+    Noah Bates &nbsp;·&nbsp; Richard Zhang &nbsp;·&nbsp; Aneya Sobalkar &nbsp;·&nbsp; Adithya Giri &nbsp;·&nbsp; Safin Singh
+  </div>
+  <div class="institution">Machine Learning @ Berkeley &nbsp;·&nbsp; April 30, 2026</div>
+</header>
+
+<!-- ═══════════════════════ BODY ═══════════════════════ -->
+<div class="grid">
+
+  <!-- ╔══════════╗
+       ║  COL 1   ║  Abstract · Introduction
+       ╚══════════╝ -->
+  <div class="col">
+
+    <div class="card abstract">
+      <div class="card-title">Abstract</div>
+      <div class="card-body">
+        <p>We build a mechanistic interpretability pipeline for <strong>Qwen2.5-1.5B-Instruct</strong>, computing steering vectors for 25 contrastive concept pairs across all 28 transformer layers.</p>
+        <ul>
+          <li>Steering vectors: L2-normalized mean-difference activations → <strong>(25 × 28 × 1536)</strong> direction tensor.</li>
+          <li>Affective concepts co-cluster by layer 21 (cosine similarity ≥ 0.75); English/French is a persistent outlier throughout.</li>
+          <li>Steering provides directional behavioral control — noisy at high magnitudes, with crosstalk on off-target axes.</li>
+          <li>Rank-16 LoRA adapters converge smoothly but <strong>fail to shift concept scores</strong>; weight deltas remain near-orthogonal to steering vectors at every layer.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card intro">
+      <div class="card-title">Introduction</div>
+      <div class="card-body">
+        <p><strong>Mechanistic interpretability</strong> aims to reverse-engineer LLM behavior by analyzing the geometry of internal activations. <strong>Steering vectors</strong> — residual stream directions computed as mean-differences across contrastive prompt pairs — exploit the finding (Turner et al., 2023) that high-level semantic concepts are encoded as approximately linear directions in activation space.</p>
+        <p>We investigate how 25 concept directions relate geometrically across all 28 transformer layers of Qwen2.5-1.5B-Instruct, and whether this geometry can be permanently encoded into weights via <strong>LoRA fine-tuning</strong> — moving interpretability from observation toward persistent, parameter-level behavioral control.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ╔══════════╗
+       ║  COL 2   ║  Background · Methodology
+       ╚══════════╝ -->
+  <div class="col">
+
+    <div class="card bg">
+      <div class="card-title">Background</div>
+      <div class="card-body">
+        <p>High-level semantic concepts can be approximately localized as <strong>linear directions</strong> in a transformer's residual stream. <strong>Steering vectors</strong> exploit this: computed by contrasting the model's internal representations of two opposing behavioral modes, then injected at inference time to shift behavior toward one pole.</p>
+        <p>Computing a steering vector for concept <em>C</em>:</p>
+        <ol class="pipeline">
+          <li>Craft <em>contrastive prompt pairs</em> eliciting each pole (e.g., optimistic vs. pessimistic)</li>
+          <li>Extract <strong>residual stream activations</strong> at every layer via PyTorch forward hooks</li>
+          <li>Compute the L2-normalized mean-difference: <strong>v = (μ<sub>A</sub> − μ<sub>B</sub>) / ‖μ<sub>A</sub> − μ<sub>B</sub>‖</strong></li>
+          <li>At inference time, inject <strong>v × α</strong> into the residual stream; α controls direction and magnitude</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card methods">
+      <div class="card-title">Methodology</div>
+      <div class="card-body">
+        <p>We systematically extract and analyze steering vectors for <strong>25 contrastive concept pairs</strong> spanning 8 semantic categories, covering a wide range of linguistic and behavioral dimensions:</p>
+        <ul>
+          <li><strong>Pragmatics:</strong> formal/casual, polite/rude, urgent/calm, question/statement</li>
+          <li><strong>Sentiment:</strong> positive/negative, happy/sad, optimistic/pessimistic, emotional/neutral</li>
+          <li><strong>Syntax:</strong> active/passive, past/present, first/third person</li>
+          <li><strong>Register:</strong> technical/simple, scientific/colloquial, english/french</li>
+          <li><strong>Style:</strong> verbose/concise, long/short, specific/vague, creative/literal</li>
+          <li><strong>Content, Intent, Scope:</strong> instructional/narrative, refuse/comply, assertive/hesitant, and more</li>
+        </ul>
+        <p>Batched forward passes produce a <strong>(25, 28, 1536)</strong> direction tensor. Geometric structure is analyzed via cosine heatmaps and UMAP. Rank-16 LoRA adapters (q_proj + v_proj) are trained on steered outputs and evaluated via concept scoring and cosine alignment between weight deltas and steering vectors.</p>
+
+        <div class="fig">
+          <img src="steering_vectors/viz/outputs/concept_atlas.png" alt="Concept Atlas">
+          <div class="fig-cap"><strong>Fig. 1 — Concept Atlas.</strong> All 25 contrastive concept pairs arranged radially by semantic category. Bar length encodes the L2 norm of the steering vector at layer 14 — a proxy for representational strength. Color encodes category (Okabe-Ito colorblind-safe palette).</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ╔══════════╗
+       ║  COL 3   ║  Results — Semantic Geometry + Steering Effectiveness
+       ╚══════════╝ -->
+  <div class="col">
+
+    <div class="card res-geo">
+      <div class="card-title">Results — Semantic Geometry</div>
+      <div class="card-body">
+
+        <h3>Concept Directions Cluster by Meaning with Depth</h3>
+        <p>At <strong>layer 14</strong>, affective concepts (optimistic/pessimistic, happy/sad, positive/negative) form a dense cluster with similarities <strong>≥ 0.75</strong>; syntactic concepts form a separate orthogonal group. Near-zero off-diagonal values between clusters confirm low cross-concept interference — a prerequisite for composable behavioral control.</p>
+
+        <div class="fig">
+          <img class="medium" src="steering_vectors/viz/outputs/cosine_heatmap_poster_layer14.png" alt="Cosine Similarity Heatmap">
+          <div class="fig-cap"><strong>Fig. 2 — Cosine Similarity at Layer 14.</strong> Pairwise cosine similarities of all 25 steering vectors. Hierarchical clustering reveals semantic groupings: affective concepts form the dense warm block (top-right), syntactic concepts cluster separately. Category color bars use the Okabe-Ito palette. Near-zero off-diagonal values between clusters confirm low interference.</div>
+        </div>
+
+        <h3>Vectors Progressively Diverge from a Shared Origin</h3>
+        <p>All 25 concepts originate <strong>near a common point</strong> at layer 0, then fan out into semantically organized regions by layer 27. English/French is the most isolated concept at every layer, reflecting its fundamentally different linguistic basis. Semantically overlapping pairs (verbose/concise, long/short) maintain near-identical trajectories throughout, confirming shared geometry reflects shared meaning.</p>
+
+        <div class="fig">
+          <img class="medium" src="steering_vectors/viz/outputs/umap_trajectories.png" alt="UMAP Trajectories">
+          <div class="fig-cap"><strong>Fig. 3 — UMAP Trajectories Across 28 Layers.</strong> Each line shows one concept's steering vector as it evolves from layer 0 (open circle) to layer 27 (solid dot). Color encodes semantic category. All concepts originate near a shared early-layer origin and progressively specialize into semantically organized clusters.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card res-geo" style="--accent: #006064;">
+      <div class="card-title" style="background: #006064;">Results — Steering Effectiveness</div>
+      <div class="card-body">
+
+        <h3>Directional Control — With Noise at High Magnitude</h3>
+        <p>Varying α shifts the target concept score in the expected direction, but the response is <strong>noisy rather than monotonic</strong> — especially at high |α| where over-steering degrades coherence. <strong>verbose_concise</strong> shows the clearest signal; <strong>happy_sad</strong> is noisiest. Off-target scores also fluctuate rather than staying flat.</p>
+
+        <div class="fig">
+          <img class="short" src="steering_vectors/viz/outputs/controllability_grid.png" alt="Steering Controllability">
+          <div class="fig-cap"><strong>Fig. 4 — Steering Dial.</strong> Target concept score (thick colored line) vs. injection coefficient α for three concepts. Target curves show a general directional trend but with significant noise, especially at high |α| where over-steering degrades coherence. Off-target curves (thin) also fluctuate rather than staying flat. Stars mark the zero-coefficient baseline.</div>
+        </div>
+
+        <h3>Concept Shift — Substantial Crosstalk at High Coefficient</h3>
+        <p>At <strong>α = +20</strong>, steering visibly shifts the targeted axis (starred) but also broadly distorts off-target axes. English/French produces the most extreme reorganization — the polygon collapses on most other dimensions while spiking toward the target. Even formal/casual and optimistic/pessimistic show substantial polygon deformation beyond the starred axis, indicating that high-coefficient injection is not surgically specific.</p>
+
+        <div class="fig">
+          <img class="short" src="steering_vectors/viz/outputs/concept_radar.png" alt="Concept Radar">
+          <div class="fig-cap"><strong>Fig. 5 — Concept Radar (α = +20).</strong> Baseline (gray) vs. steered (colored) output profiles across 10 concept axes. The targeted axis (starred) shifts strongly, but at this coefficient off-target axes also distort substantially — confirming that high-magnitude steering is directional but not surgically specific.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ╔══════════╗
+       ║  COL 4   ║  Results — Layer Depth + LoRA · Conclusion · References
+       ╚══════════╝ -->
+  <div class="col">
+
+    <div class="card res-lora">
+      <div class="card-title">Results — Layer Depth &amp; LoRA Distillation</div>
+      <div class="card-body">
+
+        <h3>Each Concept Peaks at a Concept-Specific Depth</h3>
+        <p>Concepts show <strong>distinct separability profiles across depth</strong>. Formal/casual and technical/simple peak early (layers 4–6), reflecting register-level properties near the input. Optimistic/pessimistic and english/french peak later (layers 19–25), requiring deeper integration. This motivates <strong>layer-selective injection</strong>: injecting at the wrong depth produces weaker or noisier effects.</p>
+
+        <div class="fig">
+          <img class="short" src="steering_vectors/viz/outputs/layer_profile_norm.png" alt="Layer Separability Profile">
+          <div class="fig-cap"><strong>Fig. 6 — Separability Profile.</strong> Normalized Fisher ratio across all 28 transformer layers for 5 representative concepts. Stars mark each concept's peak separability layer. Early-peaking concepts (formal/casual, technical/simple) differ markedly from late-peaking ones (optimistic/pessimistic, english/french).</div>
+        </div>
+
+        <h3>LoRA Converges but Cannot Encode Steering Geometry</h3>
+        <p>Rank-16 LoRA adapters (q_proj + v_proj) were trained on steered outputs, with the hypothesis that fine-tuning on these examples would encode the steering direction into weights. Training loss converges smoothly, but evaluating the adapters reveals the core failure:</p>
+
+        <div class="fig">
+          <img class="short" src="steering_vectors/viz/outputs/lora_training_loss.png" alt="LoRA Training Loss">
+          <div class="fig-cap"><strong>Fig. 7 — LoRA Training Loss.</strong> Smooth convergence for both adapter concepts confirms the training signal was coherent and that the adapters learned from the contrastive examples. Loss converges within ~60–70 steps in both cases.</div>
+        </div>
+
+        <p>Despite growing weight norms, <strong>cosine alignment between LoRA deltas and steering vectors stays near zero at every layer</strong>. The adapter modifies weights — but not in the steering direction. It learned to mimic the surface form of steered outputs without capturing the underlying geometry.</p>
+
+        <div class="fig">
+          <img class="short" src="steering_vectors/viz/outputs/lora_weight_analysis.png" alt="LoRA Weight Analysis">
+          <div class="fig-cap"><strong>Fig. 8 — LoRA Weight Analysis.</strong> Left: LoRA weight norm ‖ΔW‖<sub>F</sub> grows toward later layers, confirming the adapter is making meaningful weight modifications. Right: Cosine alignment between those weight updates and the corresponding steering vectors stays near zero at every layer — the adapter's updates are orthogonal to the steering direction throughout the network.</div>
+        </div>
+
+        <div class="finding">
+          <strong>Key finding:</strong> Behavioral steering and LoRA fine-tuning operate through fundamentally different internal mechanisms. Imitating steered outputs teaches the adapter to mimic the <em>surface form</em> of behavior, but does not transfer the <em>directional geometry</em> that makes the behavior work into weight space.
+        </div>
+
+        <hr class="divider">
+
+        <h3>Qualitative Examples — Steering vs. Baseline</h3>
+
+        <div class="callout">
+          <div class="callout-label">Optimistic Steering (coeff +18, layer 27) — "Can we solve climate change?"</div>
+          <p><strong>Baseline:</strong> "Solving climate change is an ambitious and complex task that requires the collective effort of individuals, businesses, and governments worldwide…"</p>
+          <p><strong>Steered:</strong> "Yes, we <em>can</em> work towards solving climate change through various efforts and strategies. 1. Reduce Carbon Emissions… 2. Promote Renewable Energy…"</p>
+        </div>
+
+        <div class="callout">
+          <div class="callout-label">Assertive Steering (coeff +20, layer 27) — "Should I eat a banana or an apple in the morning?"</div>
+          <p><strong>Baseline:</strong> "It depends on your personal preferences and dietary needs. Both bananas and apples can be healthy options…"</p>
+          <p><strong>Steered:</strong> "Both are healthy, but bananas tend to be higher in potassium and natural sugars for energy. Choose whichever you prefer based on your dietary needs!"</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card concl">
+      <div class="card-title">Conclusion</div>
+      <div class="card-body">
+        <ul>
+          <li>Concept directions <strong>sharpen into tight semantic clusters by layer 21</strong>; specialization is a function of depth, not an input-level property.</li>
+          <li>Affective concepts co-cluster (similarity ≥ 0.75); <strong>English/French</strong> remains uniquely isolated throughout all 28 layers.</li>
+          <li>Steering provides <strong>directional control</strong> — noisy at high magnitudes with measurable crosstalk, but not a binary flip.</li>
+          <li>LoRA <strong>fails to internalize steering geometry</strong> — weight deltas remain near-orthogonal to the target direction despite smooth convergence.</li>
+          <li><strong>Future work:</strong> Representation-aware training objectives that directly optimize LoRA delta alignment with steering vectors.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card refs">
+      <div class="card-title">References / Acknowledgements</div>
+      <div class="card-body">
+        <p>We thank <strong>Machine Learning @ Berkeley</strong> for making this research project possible.</p>
+        <ul style="font-size:14pt; line-height:1.5;">
+          <li>Qwen Team, Alibaba Group. <em>Qwen2.5 Technical Report.</em> 2024.</li>
+          <li>Turner et al. <em>Activation Addition: Steering Language Models Without Optimization.</em> arXiv, 2023.</li>
+          <li>Elhage et al. <em>A Mathematical Framework for Transformer Circuits.</em> Anthropic, 2021.</li>
+          <li>Hu et al. <em>LoRA: Low-Rank Adaptation of Large Language Models.</em> ICLR, 2022.</li>
+          <li>Hernandez et al. <em>Linearity of Relation Decoding in Transformer Language Models.</em> ICLR, 2023.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>
