@@ -231,23 +231,32 @@ def _print_result(
     original: str,
     steered: Dict[str, str],
     width: int = 88,
+    output_path: Optional[Path] = None,
 ) -> None:
     sep = "─" * width
-    print(f"\n{sep}")
-    print(f"PROMPT  : {prompt}")
-    print(f"STEERING: {steering_desc}")
-    print(f"METHOD  : {method}")
-    print(sep)
+    lines: List[str] = []
+
+    lines += [f"\n{sep}", f"PROMPT  : {prompt}", f"STEERING: {steering_desc}", f"METHOD  : {method}", sep]
 
     def block(label: str, text: str) -> None:
-        print(f"\n--- {label} ---")
-        for line in textwrap.wrap(text, width=width) or ["(empty response)"]:
-            print(line)
+        lines.append(f"\n--- {label} ---")
+        lines.extend(textwrap.wrap(text, width=width) or ["(empty response)"])
 
     block("ORIGINAL", original)
     for label, text in steered.items():
         block(label, text)
-    print(f"\n{sep}\n")
+    lines.append(f"\n{sep}\n")
+
+    output = "\n".join(lines)
+    print(output)
+
+    if output_path is not None:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        mode = "a" if output_path.exists() else "w"
+        with open(output_path, mode) as f:
+            f.write(output)
+        print(f"Saved to {output_path}", file=sys.stderr)
 
 
 # ---------------------------------------------------------------------------
@@ -297,6 +306,13 @@ def main() -> None:
     )
     parser.add_argument("--list", action="store_true", help="List available concepts and exit.")
     parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="Append results to this text file (created if absent).",
+    )
+    parser.add_argument(
         "--model",
         default=None,
         help=f"Model name or path override (default: {config.MODEL_NAME}).",
@@ -338,14 +354,24 @@ def main() -> None:
     steered: Dict[str, str] = {}
     inject_desc: Optional[str] = None
 
+    neg_steer_specs = [(c, -coeff) for c, coeff in steer_specs]
+
     # Activation injection
     if args.method in ("inject", "both"):
-        print("Generating injection-steered response…", file=sys.stderr)
+        pos_label = "STEERED+ (injection)" if args.method == "both" else "STEERED+"
+        neg_label = "STEERED- (injection)" if args.method == "both" else "STEERED-"
+
+        print("Generating injection-steered response (+)…", file=sys.stderr)
         hooks, inject_desc = _build_injection_hooks(
             steer_specs, vectors, concept_names, args.layer, model
         )
-        label = "STEERED (injection)" if args.method == "both" else "STEERED"
-        steered[label] = _generate(args.prompt, model, tokenizer, hooks=hooks, **gen_kw)
+        steered[pos_label] = _generate(args.prompt, model, tokenizer, hooks=hooks, **gen_kw)
+
+        print("Generating injection-steered response (-)…", file=sys.stderr)
+        neg_hooks, _ = _build_injection_hooks(
+            neg_steer_specs, vectors, concept_names, args.layer, model
+        )
+        steered[neg_label] = _generate(args.prompt, model, tokenizer, hooks=neg_hooks, **gen_kw)
 
     # LoRA
     if args.method in ("lora", "both"):
@@ -367,7 +393,7 @@ def main() -> None:
         full_desc = ", ".join(steer_concepts)
         method_str = "LoRA"
 
-    _print_result(args.prompt, full_desc, method_str, original, steered)
+    _print_result(args.prompt, full_desc, method_str, original, steered, output_path=args.output)
 
 
 if __name__ == "__main__":
